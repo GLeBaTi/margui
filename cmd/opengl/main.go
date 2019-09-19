@@ -14,6 +14,11 @@ import (
 	"github.com/go-gl/glfw/v3.2/glfw"
 )
 
+const (
+	screenWidth  = 1000
+	screenHeight = 1000
+)
+
 func init() {
 	// This is needed to arrange that main() runs on main thread.
 	// See documentation for functions that are only allowed to be called from the main thread.
@@ -35,19 +40,16 @@ func drawTexture(texture uint32, points []float32) {
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, int32(len(points)/5))
 }
 
-func rectCoords(size margui.Size, pos margui.Position) ([]float32, uint32, uint32) {
-	screenWidth := float32(1000)
-	screenHeigth := float32(1000)
-	pad := float32(0)
+func rectCoords(width float32, height float32, posX float32, posY float32) ([]float32, uint32, uint32) {
 
-	xPos := float32(pos.X-pad) / float32(screenWidth)
+	xPos := float32(posX) / float32(screenWidth)
 	x1 := -1 + xPos*2
-	x2Pos := float32(pos.X+size.Width+pad) / float32(screenWidth)
+	x2Pos := float32(posX+width) / float32(screenWidth)
 	x2 := -1 + x2Pos*2
 
-	yPos := float32(pos.Y-pad) / float32(screenHeigth)
+	yPos := float32(posY) / float32(screenHeight)
 	y1 := 1 - yPos*2
-	y2Pos := float32(pos.Y+size.Height+pad) / float32(screenHeigth)
+	y2Pos := float32(posY+height) / float32(screenHeight)
 	y2 := 1 - y2Pos*2
 
 	points := []float32{
@@ -118,7 +120,7 @@ func newTexture(color margui.Color) (texture uint32, program uint32) {
 }
 
 func draw(win *comp.Window) {
-	drawControl(&win.Control)
+	drawControl(nil, &win.Control)
 }
 
 func compileShader(source string, shaderType uint32) (uint32, error) {
@@ -166,8 +168,32 @@ func unmarshalFromFile() (*comp.Window, error) {
 	return &out, nil
 }
 
-func drawControl(ctrl *comp.Control) {
-	points, vao, vbo := rectCoords(ctrl.Size, ctrl.Position)
+func drawControl(parent *comp.Control, ctrl *comp.Control) {
+
+	//TODO Ко всему умножить пивот
+	// Dock style
+
+	//Padding
+	if parent != nil {
+		ctrl.GlobalMargin = margui.XYZW{
+			X: ctrl.Margin.X + parent.GlobalMargin.X + parent.Padding.X,
+			Y: ctrl.Margin.Y + parent.GlobalMargin.Y + parent.Padding.Y,
+			Z: parent.GlobalMargin.Z - parent.Padding.Z - parent.Padding.X - ctrl.Margin.X - ctrl.Margin.Z,
+			W: parent.GlobalMargin.W - parent.Padding.W - parent.Padding.Y - ctrl.Margin.Y - ctrl.Margin.W,
+		}
+	} else {
+		ctrl.GlobalMargin = margui.XYZW{
+			X: ctrl.Margin.X,
+			Y: ctrl.Margin.Y,
+			Z: screenWidth,
+			W: screenHeight,
+		}
+	}
+
+	//screenWidth
+	//screenHeight
+
+	points, vao, vbo := rectCoords(ctrl.GlobalMargin.Z, ctrl.GlobalMargin.W, ctrl.GlobalMargin.X, ctrl.GlobalMargin.Y)
 	texture, program := newTexture(ctrl.Color)
 	gl.UseProgram(program)
 	//gl.Enable(gl.BLEND)
@@ -178,11 +204,11 @@ func drawControl(ctrl *comp.Control) {
 	freeCoords(vao, vbo)
 
 	for _, bCtrl := range ctrl.Buttons {
-		drawControl(&bCtrl.Control)
+		drawControl(ctrl, &bCtrl.Control)
 	}
 
 	for _, pCtrl := range ctrl.Panels {
-		drawControl(&pCtrl.Control)
+		drawControl(ctrl, &pCtrl.Control)
 	}
 }
 
@@ -207,7 +233,7 @@ func main() {
 	//glfw.WindowHint(glfw.AlphaBits, 1)
 	//glfw.WindowHint(glfw.Decorated, 0)
 
-	window, err := glfw.CreateWindow(640, 480, "Testing", nil, nil)
+	window, err := glfw.CreateWindow(screenWidth, screenHeight, "Testing", nil, nil)
 	if err != nil {
 		panic(err)
 	}

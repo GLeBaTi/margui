@@ -8,9 +8,14 @@ type Control struct {
 	Text string `xml:",chardata"`
 	Id   string `xml:"Id,attr"`
 
-	Position margui.Position `xml:"Position,attr"`
-	Size     margui.Size     `xml:"Size,attr"`
-	Color    margui.Color    `xml:"Color,attr"`
+	Margin       margui.XYZW `xml:"Margin,attr"`
+	Padding      margui.XYZW `xml:"Padding,attr"`
+	GlobalMargin margui.XYZW `xml:"-"`
+	Pivot        margui.XY   `xml:"Pivot,attr"`
+	Rotation     margui.XYZ  `xml:"Rotation,attr"`
+	//Scale          margui.XY `xml:"Scale,attr"`
+	//GlobalScale    margui.XY `xml:"-"`
+	Color margui.Color `xml:"Color,attr"`
 
 	Buttons []*Button `xml:"Button"`
 	Panels  []*Panel  `xml:"Panel"`
