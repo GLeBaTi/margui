@@ -1,0 +1,5 @@
+<Window>
+    <Panel Size="200 100" Color="1 0 0 0">
+        <Button Size="50 20" Color="0 1 0 0" Position="20 30"></Button>
+    </Panel>
+</Window>
