@@ -168,27 +168,114 @@ func unmarshalFromFile() (*comp.Window, error) {
 	return &out, nil
 }
 
+func calcGlobalMargin(parent *comp.Control, ctrl *comp.Control) margui.XYZW {
+	var calculated margui.XYZW
+	var parentGlobalMargin = margui.XYZW{
+		X: 0,
+		Y: 0,
+		Z: screenWidth,
+		W: screenHeight,
+	}
+
+	//TODO parent pivot topLeft by default (0,0 or -1,1???)
+
+	if parent != nil {
+		parentGlobalMargin = parent.GlobalMargin
+	}
+
+	if ctrl.Dock == margui.Fill {
+		calculated.Z = parentGlobalMargin.Z - ctrl.Margin.X - ctrl.Margin.Z
+		calculated.W = parentGlobalMargin.W - ctrl.Margin.Y - ctrl.Margin.W
+		calculated.X = ctrl.Margin.X
+		calculated.Y = ctrl.Margin.Y
+	} else if ctrl.Dock == margui.None || ctrl.Dock == margui.Center {
+		calculated.Z = ctrl.Margin.Z
+		calculated.W = ctrl.Margin.W
+		calculated.X = ctrl.Margin.X + parentGlobalMargin.Z/2.0
+		calculated.Y = ctrl.Margin.Y + parentGlobalMargin.W/2.0
+	} else if ctrl.Dock == margui.Left {
+		calculated.Z = ctrl.Margin.Z
+		calculated.W = ctrl.Margin.W
+		calculated.X = ctrl.Margin.X
+		calculated.Y = ctrl.Margin.Y + parentGlobalMargin.W/2.0
+	} else if ctrl.Dock == margui.Top {
+		calculated.Z = ctrl.Margin.Z
+		calculated.W = ctrl.Margin.W
+		calculated.X = ctrl.Margin.X + parentGlobalMargin.Z/2.0
+		calculated.Y = ctrl.Margin.Y
+	} else if ctrl.Dock == margui.Right {
+		calculated.Z = ctrl.Margin.Z
+		calculated.W = ctrl.Margin.W
+		calculated.X = ctrl.Margin.X + parentGlobalMargin.Z
+		calculated.Y = ctrl.Margin.Y + parentGlobalMargin.W/2.0
+	} else if ctrl.Dock == margui.Bottom {
+		calculated.Z = ctrl.Margin.Z
+		calculated.W = ctrl.Margin.W
+		calculated.X = ctrl.Margin.X + parentGlobalMargin.Z/2.0
+		calculated.Y = ctrl.Margin.Y + parentGlobalMargin.W
+	} else if ctrl.Dock == margui.LeftTop {
+		calculated.Z = ctrl.Margin.Z
+		calculated.W = ctrl.Margin.W
+		calculated.X = ctrl.Margin.X
+		calculated.Y = ctrl.Margin.Y
+	} else if ctrl.Dock == margui.RightTop {
+		calculated.Z = ctrl.Margin.Z
+		calculated.W = ctrl.Margin.W
+		calculated.X = ctrl.Margin.X + parentGlobalMargin.Z
+		calculated.Y = ctrl.Margin.Y
+	} else if ctrl.Dock == margui.RightBottom {
+		calculated.Z = ctrl.Margin.Z
+		calculated.W = ctrl.Margin.W
+		calculated.X = ctrl.Margin.X + parentGlobalMargin.Z
+		calculated.Y = ctrl.Margin.Y + parentGlobalMargin.W
+	} else if ctrl.Dock == margui.LeftBottom {
+		calculated.Z = ctrl.Margin.Z
+		calculated.W = ctrl.Margin.W
+		calculated.X = ctrl.Margin.X
+		calculated.Y = ctrl.Margin.Y + parentGlobalMargin.W
+	} else if ctrl.Dock == margui.FillHorizontal {
+		calculated.Z = parentGlobalMargin.Z - ctrl.Margin.X - ctrl.Margin.Z
+		calculated.W = ctrl.Margin.W
+		calculated.X = ctrl.Margin.X
+		calculated.Y = ctrl.Margin.Y + parentGlobalMargin.W/2.0
+	} else if ctrl.Dock == margui.FillVertical {
+		calculated.Z = ctrl.Margin.Z
+		calculated.W = parentGlobalMargin.W - ctrl.Margin.Y - ctrl.Margin.W
+		calculated.X = ctrl.Margin.X + parentGlobalMargin.Z/2.0
+		calculated.Y = ctrl.Margin.Y
+	} else if ctrl.Dock == margui.FillLeft {
+		calculated.Z = ctrl.Margin.Z
+		calculated.W = parentGlobalMargin.Z - ctrl.Margin.Y - ctrl.Margin.W
+		calculated.X = ctrl.Margin.X
+		calculated.Y = ctrl.Margin.Y
+	} else if ctrl.Dock == margui.FillTop {
+		calculated.Z = parentGlobalMargin.Z - ctrl.Margin.X - ctrl.Margin.Z
+		calculated.W = ctrl.Margin.W
+		calculated.X = ctrl.Margin.X
+		calculated.Y = ctrl.Margin.Y
+	} else if ctrl.Dock == margui.FillRight {
+		calculated.Z = ctrl.Margin.Z
+		calculated.W = parentGlobalMargin.Z - ctrl.Margin.Y - ctrl.Margin.W
+		calculated.X = ctrl.Margin.X + parentGlobalMargin.Z
+		calculated.Y = ctrl.Margin.Y
+	} else if ctrl.Dock == margui.FillBottom {
+		calculated.Z = parentGlobalMargin.Z - ctrl.Margin.X - ctrl.Margin.Z
+		calculated.W = ctrl.Margin.W
+		calculated.X = ctrl.Margin.X
+		calculated.Y = ctrl.Margin.Y + parentGlobalMargin.W
+	}
+
+	//Add parent position + self margin left top
+	calculated.X += parentGlobalMargin.X
+	calculated.Y += parentGlobalMargin.Y
+
+	return calculated
+}
+
 func drawControl(parent *comp.Control, ctrl *comp.Control) {
 
 	//TODO Ко всему умножить пивот
-	// Dock style
-
-	//Padding
-	if parent != nil {
-		ctrl.GlobalMargin = margui.XYZW{
-			X: ctrl.Margin.X + parent.GlobalMargin.X + parent.Padding.X,
-			Y: ctrl.Margin.Y + parent.GlobalMargin.Y + parent.Padding.Y,
-			Z: parent.GlobalMargin.Z - parent.Padding.Z - parent.Padding.X - ctrl.Margin.X - ctrl.Margin.Z,
-			W: parent.GlobalMargin.W - parent.Padding.W - parent.Padding.Y - ctrl.Margin.Y - ctrl.Margin.W,
-		}
-	} else {
-		ctrl.GlobalMargin = margui.XYZW{
-			X: ctrl.Margin.X,
-			Y: ctrl.Margin.Y,
-			Z: screenWidth,
-			W: screenHeight,
-		}
-	}
+	ctrl.GlobalMargin = calcGlobalMargin(parent, ctrl)
 
 	//screenWidth
 	//screenHeight

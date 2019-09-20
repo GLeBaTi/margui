@@ -121,3 +121,27 @@ func (c *XYZ) UnmarshalXMLAttr(attr xml.Attr) error {
 	}
 	return nil
 }
+
+type DockStyle string
+
+const (
+	//None = Center
+	None   DockStyle = ""
+	Center DockStyle = "Center"
+	Fill   DockStyle = "Fill"
+
+	FillLeft       DockStyle = "FillLeft"
+	FillTop        DockStyle = "FillTop"
+	FillRight      DockStyle = "FillRight"
+	FillBottom     DockStyle = "FillBottom"
+	FillHorizontal DockStyle = "FillHorizontal"
+	FillVertical   DockStyle = "FillVertical"
+	Left           DockStyle = "Left"
+	Right          DockStyle = "Right"
+	Top            DockStyle = "Top"
+	Bottom         DockStyle = "Bottom"
+	LeftTop        DockStyle = "LeftTop"
+	LeftBottom     DockStyle = "LeftBottom"
+	RightTop       DockStyle = "RightTop"
+	RightBottom    DockStyle = "RightBottom"
+)
