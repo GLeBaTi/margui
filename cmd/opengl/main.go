@@ -40,17 +40,22 @@ func drawTexture(texture uint32, points []float32) {
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, int32(len(points)/5))
 }
 
+func getViewportXCoord(x float32) float32 {
+	xPos := float32(x) / float32(screenWidth)
+	return -1 + xPos*2
+}
+
+func getViewportYCoord(y float32) float32 {
+	xPos := float32(y) / float32(screenHeight)
+	return 1 - xPos*2
+}
+
 func rectCoords(width float32, height float32, posX float32, posY float32) ([]float32, uint32, uint32) {
 
-	xPos := float32(posX) / float32(screenWidth)
-	x1 := -1 + xPos*2
-	x2Pos := float32(posX+width) / float32(screenWidth)
-	x2 := -1 + x2Pos*2
-
-	yPos := float32(posY) / float32(screenHeight)
-	y1 := 1 - yPos*2
-	y2Pos := float32(posY+height) / float32(screenHeight)
-	y2 := 1 - y2Pos*2
+	x1 := getViewportXCoord(posX)
+	x2 := getViewportXCoord(posX + width)
+	y1 := getViewportYCoord(posY)
+	y2 := getViewportYCoord(posY + height)
 
 	points := []float32{
 		// coord x, y, x texture x, y
@@ -76,15 +81,138 @@ func rectCoords(width float32, height float32, posX float32, posY float32) ([]fl
 	return points, vao, vbo
 }
 
-func newTexture(color margui.Color) (texture uint32, program uint32) {
-	//gl.GenTextures(1, &texture)
-	//gl.ActiveTexture(gl.TEXTURE0)
-	//gl.BindTexture(gl.TEXTURE_2D, texture)
-	//gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	//gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	//gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	//gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+func newLinearGradientTexture(ctrlGlobalMargin margui.XYZW, gradient comp.LinearGradientBrush) (texture uint32, program uint32) {
+	vertex_shaderStr := `
+    #version 110
+    attribute vec3 vert;
+    void main() {
+        gl_Position = vec4(vert, 1);
+    }
+` + "\x00"
 
+	fragment_shaderStr := fmt.Sprintf(`
+    #version 110
+	uniform vec2  gradientStartPos;
+	uniform vec2  gradientEndPos;
+	uniform int   numStops;
+	uniform vec4  colors[16];
+	uniform float stops[16];
+    void main() {
+        float  alpha = atan( -gradientEndPos.y + gradientStartPos.y, gradientEndPos.x - gradientStartPos.x );
+    	float  gradientStartPosRotatedX = gradientStartPos.x*cos(alpha) - gradientStartPos.y*sin(alpha);
+    	float  gradientEndPosRotatedX   = gradientEndPos.x*cos(alpha) - gradientEndPos.y*sin(alpha);
+    	float  d = gradientEndPosRotatedX - gradientStartPosRotatedX;
+    	
+	
+    	float y = gl_FragCoord.y;
+    	float x = gl_FragCoord.x;
+    	float xLocRotated = x*cos( alpha ) - y*sin( alpha );
+ 	
+    	gl_FragColor = mix(colors[0], colors[1], smoothstep( gradientStartPosRotatedX + stops[0]*d, gradientStartPosRotatedX + stops[1]*d, xLocRotated ) );
+    	for ( int i=1; i<numStops-1; ++i ) {
+    	    gl_FragColor = mix(gl_FragColor, colors[i+1], smoothstep( gradientStartPosRotatedX + stops[i]*d, gradientStartPosRotatedX + stops[i+1]*d, xLocRotated ) );
+    	}
+    }
+` + "\x00")
+
+	vs, err := compileShader(vertex_shaderStr, gl.VERTEX_SHADER)
+	if err != nil {
+		panic(err)
+	}
+
+	fs, err := compileShader(fragment_shaderStr, gl.FRAGMENT_SHADER)
+	if err != nil {
+		panic(err)
+	}
+
+	//invert Y axis for fg shader
+	startPosX := (gradient.Start.X*ctrlGlobalMargin.Z + ctrlGlobalMargin.X)
+	startPosY := screenHeight - (gradient.Start.Y*ctrlGlobalMargin.W + ctrlGlobalMargin.Y)
+	endPosX := (gradient.End.X*ctrlGlobalMargin.Z + ctrlGlobalMargin.X)
+	endPosY := screenHeight - (gradient.End.Y*ctrlGlobalMargin.W + ctrlGlobalMargin.Y)
+	var stops []float32
+	var colors [][4]float32
+	for _, item := range gradient.Colors {
+		stops = append(stops, item.Offset)
+		colors = append(colors, [4]float32{item.Color.R, item.Color.G, item.Color.B, item.Color.A})
+	}
+
+	program = gl.CreateProgram()
+	gl.AttachShader(program, fs)
+	gl.AttachShader(program, vs)
+	gl.LinkProgram(program)
+
+	gl.ProgramUniform1i(program, gl.GetUniformLocation(program, gl.Str("numStops\x00")), int32(len(gradient.Colors)))
+	gl.ProgramUniform2f(program, gl.GetUniformLocation(program, gl.Str("gradientStartPos\x00")), startPosX, startPosY)
+	gl.ProgramUniform2f(program, gl.GetUniformLocation(program, gl.Str("gradientEndPos\x00")), endPosX, endPosY)
+	gl.ProgramUniform4fv(program, gl.GetUniformLocation(program, gl.Str("colors\x00")), int32(len(colors)), &colors[0][0])
+	gl.ProgramUniform1fv(program, gl.GetUniformLocation(program, gl.Str("stops\x00")), int32(len(stops)), &stops[0])
+
+	return texture, program
+}
+
+func newRadialGradientTexture(ctrlGlobalMargin margui.XYZW, gradient comp.RadialGradientBrush) (texture uint32, program uint32) {
+	vertex_shaderStr := `
+    #version 110
+    attribute vec3 vert;
+    void main() {
+        gl_Position = vec4(vert, 1);
+    }
+` + "\x00"
+
+	fragment_shaderStr := fmt.Sprintf(`
+    #version 110
+    out vec4 frag_colour;
+    uniform int   numStops;
+	uniform vec4  colors[16];
+	uniform float stops[16];
+	uniform vec2 center;
+
+    void main() {
+        vec2 pos_ndc = 2.0 * gl_FragCoord.xy / vec2(80, 80) - 1.0;
+    	float dist = length(pos_ndc);
+
+    	gl_FragColor = mix(colors[0], colors[1], smoothstep( stops[0], stops[1], dist ) );
+    	for ( int i=1; i<numStops-1; ++i ) {
+        	gl_FragColor = mix(gl_FragColor, colors[i+1], smoothstep( stops[i], stops[i+1], dist ) );
+    	}
+    }
+` + "\x00")
+
+	vs, err := compileShader(vertex_shaderStr, gl.VERTEX_SHADER)
+	if err != nil {
+		panic(err)
+	}
+
+	fs, err := compileShader(fragment_shaderStr, gl.FRAGMENT_SHADER)
+	if err != nil {
+		panic(err)
+	}
+
+	//invert Y axis for fg shader
+	centerPosX := (gradient.Pivot.X*ctrlGlobalMargin.Z + ctrlGlobalMargin.X)
+	centerPosY := screenHeight - (gradient.Pivot.Y*ctrlGlobalMargin.W + ctrlGlobalMargin.Y)
+	var stops []float32
+	var colors [][4]float32
+	for _, item := range gradient.Colors {
+		stops = append(stops, item.Offset)
+		colors = append(colors, [4]float32{item.Color.R, item.Color.G, item.Color.B, item.Color.A})
+	}
+
+	program = gl.CreateProgram()
+	gl.AttachShader(program, fs)
+	gl.AttachShader(program, vs)
+	gl.LinkProgram(program)
+
+	gl.ProgramUniform1i(program, gl.GetUniformLocation(program, gl.Str("numStops\x00")), int32(len(gradient.Colors)))
+	gl.ProgramUniform2f(program, gl.GetUniformLocation(program, gl.Str("center\x00")), centerPosX, centerPosY)
+	gl.ProgramUniform4fv(program, gl.GetUniformLocation(program, gl.Str("colors\x00")), int32(len(colors)), &colors[0][0])
+	gl.ProgramUniform1fv(program, gl.GetUniformLocation(program, gl.Str("stops\x00")), int32(len(stops)), &stops[0])
+
+	return texture, program
+}
+
+func newSolidColorTexture(color margui.Color) (texture uint32, program uint32) {
 	vertex_shaderStr := `
     #version 110
     attribute vec3 vert;
@@ -177,8 +305,6 @@ func calcGlobalMargin(parent *comp.Control, ctrl *comp.Control) margui.XYZW {
 		W: screenHeight,
 	}
 
-	//TODO parent pivot topLeft by default (0,0 or -1,1???)
-
 	if parent != nil {
 		parentGlobalMargin = parent.GlobalMargin
 	}
@@ -269,19 +395,43 @@ func calcGlobalMargin(parent *comp.Control, ctrl *comp.Control) margui.XYZW {
 	calculated.X += parentGlobalMargin.X
 	calculated.Y += parentGlobalMargin.Y
 
+	if ctrl.Dock == margui.Fill {
+
+	} else if ctrl.Dock == margui.FillLeft || ctrl.Dock == margui.FillRight || ctrl.Dock == margui.FillVertical {
+		calculated.X += (calculated.Z / 2.0) * (-ctrl.Pivot.X - 1.0)
+	} else if ctrl.Dock == margui.FillTop || ctrl.Dock == margui.FillBottom || ctrl.Dock == margui.FillHorizontal {
+		calculated.Y += (calculated.W / 2.0) * (ctrl.Pivot.Y - 1.0)
+	} else {
+		calculated.X += (calculated.Z / 2.0) * (-ctrl.Pivot.X - 1.0)
+		calculated.Y += (calculated.W / 2.0) * (ctrl.Pivot.Y - 1.0)
+	}
 	return calculated
 }
 
 func drawControl(parent *comp.Control, ctrl *comp.Control) {
 
-	//TODO Ко всему умножить пивот
 	ctrl.GlobalMargin = calcGlobalMargin(parent, ctrl)
 
-	//screenWidth
-	//screenHeight
-
 	points, vao, vbo := rectCoords(ctrl.GlobalMargin.Z, ctrl.GlobalMargin.W, ctrl.GlobalMargin.X, ctrl.GlobalMargin.Y)
-	texture, program := newTexture(ctrl.Color)
+
+	var texture, program uint32
+	if ctrl.Color != nil {
+		texture, program = newSolidColorTexture(*ctrl.Color)
+	} else if ctrl.BackgroundColor != nil {
+		texture, program = newSolidColorTexture(ctrl.BackgroundColor.Color)
+	} else if ctrl.BackgroundLinearGradient != nil {
+		texture, program = newLinearGradientTexture(ctrl.GlobalMargin, *ctrl.BackgroundLinearGradient)
+	} else if ctrl.BackgroundRadialGradient != nil {
+		texture, program = newRadialGradientTexture(ctrl.GlobalMargin, *ctrl.BackgroundRadialGradient)
+	} else {
+		texture, program = newSolidColorTexture(margui.Color{
+			R: 1,
+			G: 1,
+			B: 1,
+			A: 0,
+		})
+	}
+
 	gl.UseProgram(program)
 	//gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
