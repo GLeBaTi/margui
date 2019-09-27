@@ -33,13 +33,6 @@ func freeCoords(vao, vbo uint32) {
 	gl.DeleteBuffers(1, &vbo)
 }
 
-func drawTexture(texture uint32, points []float32) {
-	//gl.ActiveTexture(gl.TEXTURE0)
-	//gl.BindTexture(gl.TEXTURE_2D, texture)
-
-	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, int32(len(points)/5))
-}
-
 func getViewportXCoord(x float32) float32 {
 	xPos := float32(x) / float32(screenWidth)
 	return -1 + xPos*2
@@ -70,13 +63,15 @@ func rectCoords(width float32, height float32, posX float32, posY float32) ([]fl
 	gl.BindVertexArray(vao)
 	gl.EnableVertexAttribArray(0)
 
+	//Create buffer
 	var vbo uint32
 	gl.GenBuffers(1, &vbo)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, 4*len(points), gl.Ptr(points), gl.STATIC_DRAW)
 
-	gl.EnableVertexAttribArray(0)
+	//Tell, how OGL must copy vbo into vertShader (5nums * sizeof(float32))
 	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, gl.PtrOffset(0))
+	gl.EnableVertexAttribArray(0)
 
 	return points, vao, vbo
 }
@@ -142,6 +137,9 @@ func newLinearGradientTexture(ctrlGlobalMargin margui.XYZW, gradient comp.Linear
 	gl.AttachShader(program, vs)
 	gl.LinkProgram(program)
 
+	gl.DeleteShader(fs)
+	gl.DeleteShader(vs)
+
 	gl.ProgramUniform1i(program, gl.GetUniformLocation(program, gl.Str("numStops\x00")), int32(len(gradient.Colors)))
 	gl.ProgramUniform2f(program, gl.GetUniformLocation(program, gl.Str("gradientStartPos\x00")), startPosX, startPosY)
 	gl.ProgramUniform2f(program, gl.GetUniformLocation(program, gl.Str("gradientEndPos\x00")), endPosX, endPosY)
@@ -204,6 +202,9 @@ func newRadialGradientTexture(ctrlGlobalMargin margui.XYZW, gradient comp.Radial
 	gl.AttachShader(program, vs)
 	gl.LinkProgram(program)
 
+	gl.DeleteShader(fs)
+	gl.DeleteShader(vs)
+
 	gl.ProgramUniform1i(program, gl.GetUniformLocation(program, gl.Str("numStops\x00")), int32(len(gradient.Colors)))
 	gl.ProgramUniform2f(program, gl.GetUniformLocation(program, gl.Str("center\x00")), centerPosX, centerPosY)
 	gl.ProgramUniform4fv(program, gl.GetUniformLocation(program, gl.Str("colors\x00")), int32(len(colors)), &colors[0][0])
@@ -244,11 +245,14 @@ func newSolidColorTexture(color margui.Color) (texture uint32, program uint32) {
 	gl.AttachShader(program, vs)
 	gl.LinkProgram(program)
 
+	gl.DeleteShader(fs)
+	gl.DeleteShader(vs)
+
 	return texture, program
 }
 
-func draw(win *comp.Window) {
-	drawControl(nil, &win.Control)
+func draw(win *comp.Rectangle) {
+	drawControl(nil, &win.Geometry)
 }
 
 func compileShader(source string, shaderType uint32) (uint32, error) {
@@ -274,7 +278,7 @@ func compileShader(source string, shaderType uint32) (uint32, error) {
 	return shader, nil
 }
 
-func unmarshalFromFile() (*comp.Window, error) {
+func unmarshalFromFile() (*comp.Rectangle, error) {
 
 	xmlFile, err := os.Open("main.xml")
 	if err != nil {
@@ -288,7 +292,7 @@ func unmarshalFromFile() (*comp.Window, error) {
 		return nil, err
 	}
 
-	var out comp.Window
+	var out comp.Rectangle
 	err = xml.Unmarshal(fileData, &out)
 	if err != nil {
 		return nil, err
@@ -296,7 +300,7 @@ func unmarshalFromFile() (*comp.Window, error) {
 	return &out, nil
 }
 
-func calcGlobalMargin(parent *comp.Control, ctrl *comp.Control) margui.XYZW {
+func calcGlobalMargin(parent *comp.Geometry, ctrl *comp.Geometry) margui.XYZW {
 	var calculated margui.XYZW
 	var parentGlobalMargin = margui.XYZW{
 		X: 0,
@@ -408,17 +412,18 @@ func calcGlobalMargin(parent *comp.Control, ctrl *comp.Control) margui.XYZW {
 	return calculated
 }
 
-func drawControl(parent *comp.Control, ctrl *comp.Control) {
+func drawControl(parent *comp.Geometry, ctrl *comp.Geometry) {
 
 	ctrl.GlobalMargin = calcGlobalMargin(parent, ctrl)
 
 	points, vao, vbo := rectCoords(ctrl.GlobalMargin.Z, ctrl.GlobalMargin.W, ctrl.GlobalMargin.X, ctrl.GlobalMargin.Y)
 
 	var texture, program uint32
+
 	if ctrl.Color != nil {
 		texture, program = newSolidColorTexture(*ctrl.Color)
-	} else if ctrl.BackgroundColor != nil {
-		texture, program = newSolidColorTexture(ctrl.BackgroundColor.Color)
+	} else if ctrl.BackgroundSolidColor != nil {
+		texture, program = newSolidColorTexture(ctrl.BackgroundSolidColor.Color)
 	} else if ctrl.BackgroundLinearGradient != nil {
 		texture, program = newLinearGradientTexture(ctrl.GlobalMargin, *ctrl.BackgroundLinearGradient)
 	} else if ctrl.BackgroundRadialGradient != nil {
@@ -436,16 +441,26 @@ func drawControl(parent *comp.Control, ctrl *comp.Control) {
 	//gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
 
+	_ = texture
 	//gl.Enable(gl.BLEND) // enable translucency
-	drawTexture(texture, points)
+	//gl.ActiveTexture(gl.TEXTURE0)
+	//gl.BindTexture(gl.TEXTURE_2D, texture)
+
+	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, int32(len(points)/5))
 	freeCoords(vao, vbo)
 
-	for _, bCtrl := range ctrl.Buttons {
-		drawControl(ctrl, &bCtrl.Control)
+	//TODO как-то автоматом сделать
+	for _, pCtrl := range ctrl.Rectangles {
+		drawControl(ctrl, &pCtrl.Geometry)
 	}
-
-	for _, pCtrl := range ctrl.Panels {
-		drawControl(ctrl, &pCtrl.Control)
+	for _, pCtrl := range ctrl.Ellipses {
+		drawControl(ctrl, &pCtrl.Geometry)
+	}
+	for _, pCtrl := range ctrl.Paths {
+		drawControl(ctrl, &pCtrl.Geometry)
+	}
+	for _, pCtrl := range ctrl.Polygons {
+		drawControl(ctrl, &pCtrl.Geometry)
 	}
 }
 
@@ -464,9 +479,10 @@ func main() {
 	// make the window hidden, we will set it up and then show it later
 	//glfw.WindowHint(glfw.Visible, 0)
 
-	glfw.WindowHint(glfw.ContextVersionMajor, 2)
-	glfw.WindowHint(glfw.ContextVersionMinor, 0)
-	glfw.WindowHint(glfw.Samples, 4)
+	glfw.WindowHint(glfw.ContextVersionMajor, 3)
+	glfw.WindowHint(glfw.ContextVersionMinor, 2)
+	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile) //error if using deprecated OpenGL
+	//glfw.WindowHint(glfw.Samples, 4)
 	//glfw.WindowHint(glfw.AlphaBits, 1)
 	//glfw.WindowHint(glfw.Decorated, 0)
 
@@ -485,17 +501,20 @@ func main() {
 	if err = gl.Init(); err != nil {
 		panic(err)
 	}
-
-	gl.Enable(gl.DEPTH_TEST)
+	gl.Viewport(0, 0, screenWidth, screenHeight)
+	gl.Enable(gl.DEPTH_TEST) //Always
 	gl.DepthFunc(gl.LEQUAL)
 	gl.Disable(gl.CULL_FACE)
 	gl.CullFace(gl.BACK)
+	gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
+	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
+	//TODO glOrtho
 
 	gl.ClearColor(1, 1, 1, 0.0)
 	for !window.ShouldClose() {
+		glfw.PollEvents()
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		draw(wnd)
 		window.SwapBuffers()
-		glfw.PollEvents()
 	}
 }

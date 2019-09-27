@@ -1,63 +1,65 @@
-<Window Dock="Fill">
-    <Panel Dock="Fill" Margin="10 10 20 10" Color="1 0 0 0"  Pivot="0 0">
+<Rectangle Dock="Fill">
+    <Rectangle Dock="Fill" Margin="10 10 20 10" Color="1 0 0 1"  Pivot="0 0">
 
-        <Button Dock="FillLeft" Margin="10 10 100 10" Pivot="-1 0">
-            <BackgroundColor Color="1 0.5 0 0" />
-        </Button>
-        <Button Dock="FillTop" Margin="10 10 10 70" Pivot="0 1">
+        <Rectangle Dock="FillLeft" Margin="10 10 100 10" Pivot="-1 0">
+            <BackgroundSolidColor Color="1 0.5 0 1" />
+        </Rectangle>
+        <Rectangle Dock="FillTop" Margin="10 10 10 70" Pivot="0 1">
             <BackgroundLinearGradient Start="0 0" End="1 1">
-                <GradientStop Color="1 0 0 0" Offset="0" />
-                <GradientStop Color="0 1 0 0" Offset="0.5" />
-                <GradientStop Color="0 1 0 0" Offset="1" />
+                <GradientStop Color="1 0 0 1" Offset="0" />
+                <GradientStop Color="0 1 0 1" Offset="0.5" />
+                <GradientStop Color="0 1 0 1" Offset="1" />
             </BackgroundLinearGradient>
-        </Button>
-        <Button Dock="FillRight" Margin="-10 10 100 10" Color="1 1 0 0"  Pivot="1 0">
-        </Button>
-        <Button Dock="FillBottom" Margin="10 -10 10 70" Color="1 1 0 0"  Pivot="0 -1">
-        </Button>
-        <Button Dock="FillHorizontal" Margin="0 0 0 70" Color="1 1 0 0"  Pivot="0 0">
-        </Button>
-        <Button Dock="FillVertical" Margin="0 0 100 0" Color="1 1 0 0"  Pivot="0 0">
-        </Button>
+        </Rectangle>
+        <Rectangle Dock="FillRight" Margin="-10 10 100 10" Color="1 1 0 1"  Pivot="1 0">
+        </Rectangle>
+        <Rectangle Dock="FillBottom" Margin="10 -10 10 70" Color="1 1 0 1"  Pivot="0 -1">
+        </Rectangle>
+        <Rectangle Dock="FillHorizontal" Margin="0 0 0 70" Color="1 1 0 1"  Pivot="0 0">
+        </Rectangle>
+        <Rectangle Dock="FillVertical" Margin="0 0 100 0" Color="1 1 0 1"  Pivot="0 0">
+        </Rectangle>
 
-        <Button Dock="LeftTop" Margin="20 20 80 50" Pivot="-1 1">
+        <Rectangle Dock="LeftTop" Margin="20 20 80 50" Pivot="-1 1">
             <BackgroundLinearGradient Start="0 0" End="1 1">
-                <GradientStop Color="1 0 0 0" Offset="0" />
-                <GradientStop Color="1 1 0 0" Offset="0.5" />
-                <GradientStop Color="0 1 0 0" Offset="1" />
+                <GradientStop Color="1 0 0 1" Offset="0" />
+                <GradientStop Color="1 1 0 1" Offset="0.5" />
+                <GradientStop Color="0 1 0 1" Offset="1" />
             </BackgroundLinearGradient>
-        </Button>
-        <Button Dock="Top" Margin="0 20 80 50" Pivot="0 1">
+        </Rectangle>
+        <Rectangle Dock="Top" Margin="0 20 80 50" Pivot="0 1">
             <BackgroundLinearGradient Start="0.5 0.0" End="0.5 1.0">
-                <GradientStop Color="1 0 0 0" Offset="0" />
-                <GradientStop Color="1 1 0 0" Offset="0.2" />
-                <GradientStop Color="0 1 0 0" Offset="1" />
+                <GradientStop Color="1 0 0 1" Offset="0" />
+                <GradientStop Color="1 1 0 1" Offset="0.2" />
+                <GradientStop Color="0 1 0 1" Offset="1" />
             </BackgroundLinearGradient>
-        </Button>
-        <Button Dock="RightTop" Margin="-20 20 80 50" Pivot="1 1">
+        </Rectangle>
+        <Rectangle Dock="RightTop" Margin="-20 20 80 50" Pivot="1 1">
             <BackgroundLinearGradient Start="0 0.5" End="1 0.5">
-                <GradientStop Color="1 0 0 0" Offset="0" />
-                <GradientStop Color="1 1 0 0" Offset="0.2" />
-                <GradientStop Color="1 1 1 0" Offset="0.7" />
-                <GradientStop Color="0 1 0 0" Offset="1" />
+                <GradientStop Color="1 0 0 1" Offset="0" />
+                <GradientStop Color="1 1 0 1" Offset="0.2" />
+                <GradientStop Color="1 1 1 1" Offset="0.7" />
+                <GradientStop Color="0 1 0 1" Offset="1" />
             </BackgroundLinearGradient>
-        </Button>
-        <Button Dock="Right" Margin="-20 0 80 50" Color="0 1 0 0"  Pivot="1 0">
-        </Button>
-        <Button Dock="RightBottom" Margin="-20 -20 80 50" Color="0 1 0 0"  Pivot="1 -1">
-        </Button>
-        <Button Dock="Bottom" Margin="0 -20 80 50" Color="0 1 0 0" Pivot="0 -1">
-        </Button>
-        <Button Dock="LeftBottom" Margin="20 -20 80 50" Color="0 1 0 0" Pivot="-1 -1">
-        </Button>
-        <Button Dock="Left" Margin="20 0 80 50" Color="0 1 0 0" Pivot="-1 0">
-        </Button>
-        <Button Dock="" Margin="0 0 80 80" Pivot="0 0">
+        </Rectangle>
+        <Rectangle Dock="Right" Margin="-20 0 80 50" Color="0 1 0 1"  Pivot="1 0">
+        </Rectangle>
+        <Rectangle Dock="RightBottom" Margin="-20 -20 80 50" Color="0 1 0 1"  Pivot="1 -1">
+        </Rectangle>
+        <Rectangle Dock="Bottom" Margin="0 -20 80 50" Color="0 1 0 1" Pivot="0 -1">
+        </Rectangle>
+        <Rectangle Dock="LeftBottom" Margin="20 -20 80 50" Color="0 1 0 1" Pivot="-1 -1">
+        </Rectangle>
+        <Rectangle Dock="Left" Margin="20 0 80 50" Color="0 1 0 1" Pivot="-1 0">
+        </Rectangle>
+        <Rectangle Dock="" Margin="0 0 80 80" Pivot="0 0">
             <BackgroundRadialGradient Pivot="0 0">
-                <GradientStop Color="1 0 0 0" Offset="0" />
-                <GradientStop Color="0 1 0 0" Offset="0.5" />
-                <GradientStop Color="0 0 1 0" Offset="1" />
+                <GradientStop Color="1 0 0 1" Offset="0" />
+                <GradientStop Color="0 1 0 1" Offset="0.5" />
+                <GradientStop Color="0 0 1 1" Offset="1" />
             </BackgroundRadialGradient>
-        </Button>
-    </Panel>
-</Window>
+        </Rectangle>
+        <Rectangle Margin="100 100 100 100" BorderColor="0 0 0 1" BorderStyle="Solid" Color="1 1 1 1" Pivot="-1 1">
+        </Rectangle>
+    </Rectangle>
+</Rectangle>

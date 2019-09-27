@@ -19,10 +19,10 @@ func (c *Color) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 func (c *Color) UnmarshalXMLAttr(attr xml.Attr) error {
 	_, err := fmt.Sscanf(attr.Value, "%f %f %f %f", &c.R, &c.G, &c.B, &c.A)
 	if err != nil {
-		c.R = 0
+		c.R = 1
 		c.G = 0
-		c.B = 0
-		c.A = 0
+		c.B = 1
+		c.A = 1
 	}
 	return nil
 }

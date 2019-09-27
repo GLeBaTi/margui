@@ -1,0 +1,23 @@
+Сортируем объекты по Z
+применяем его шейдер
+Рисуем
+
+Шейдер для Rectangle, Ellipse, Path, Polygon + заполнить внутри + обводка
+
+
+Только 2д трансформации. Самому смотреть сортировку и отрисовывать в нужном порядке группирую по одинаковым шейдерам
+
+There is no clear distinction in OpenGL between 2D and 3D rendering, and as such, 2D rendering is similar to 3D. There are some direct frame buffer operations you can do (particularly glDrawPixels), but most real world software uses the same 3D techniques to render GUIs because it is just as easy, more flexible and often computationally faster.
+Just set up a 2D projection matrix with glOrtho, disable GL_DEPTH_TEST and render primitives similar to 3D rendering (e.g. glVertex2f instead of glVertex3f). For rendering text, use a textured mapped GL_QUADS in combination with alpha blending (the texture containing the glyphs or icons). You can probably find many code samples and a few libraries on the web that can help with this.
+If you need to render 3D UI elements such as trackballs or 3D text, you can simply clear the depth buffer after rendering your 3d scene, and draw the 3D UI elements on top without having them intersect with the 3D scene.
+Finally, it is also possible to render 2D elements into a 3D scene (e.g. player name tags over game avatars). You can do this by projecting the 3D world position to the 2D UI screen coordinates. Look at gluProject and gluUnproject for this.
+This is essentially the same as your first suggestion in your post, which as you guessed is overcomplicated for typical UI rendering. It may also suffer from floating point numerical instability, and therefor isn’t recommended unless you know what you are doing.
+
+
+For static elements that are set up once and never change, you can certainly pack them into a GL_STATIC_DRAW buffer and keep it alive for as long as needed. If you still have to move these static elements around in the screen, then this approach is not very interesting anymore because each would need a transformation matrix that can only be set via uniforms, so it results in one draw call per element.
+The "usual" way of handling UI is to just resubmit the whole vertex data each frame, using screen space positions. Generate the final 2D vertexes in the application code and submit to a dynamic VBO. So you can, as described in your first point, draw everything with a single draw call (assuming other things like textures are not involved. Texture altas can help).
+So the decision might be between either several draw calls per frame or one large buffer update per frame and a handful of draws.
+You should certainly try to batch things that share the save properties together. Drawing with depth enabled is also interesting, since it should lift the requirement of a sorting step before submission.
+You can also try to be smart and avoid resubmitting individual UI elements that didn't change or move in a given frame (assuming you are taking the path of generating the final vertex position on the CPU-side).
+
+SSBO
