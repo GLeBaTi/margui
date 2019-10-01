@@ -464,6 +464,45 @@ func drawControl(parent *comp.Geometry, ctrl *comp.Geometry) {
 	}
 }
 
+func GetAllControls(parent *comp.Control) []*comp.Control {
+	var result []*comp.Control
+	result = append(result, parent)
+	for _, pCtrl := range parent.Rectangles {
+		result = append(result, GetAllControls(&pCtrl.Control)...)
+	}
+	for _, pCtrl := range parent.Ellipses {
+		result = append(result, GetAllControls(&pCtrl.Control)...)
+	}
+	for _, pCtrl := range parent.Paths {
+		result = append(result, GetAllControls(&pCtrl.Control)...)
+	}
+	for _, pCtrl := range parent.Polygons {
+		result = append(result, GetAllControls(&pCtrl.Control)...)
+	}
+	return result
+}
+
+func GetAllInteractables(parent interface{}, parentCtrl *comp.Control) []comp.Interactable {
+	var result []comp.Interactable
+	interactable, ok := parent.(comp.Interactable)
+	if ok && parentCtrl.IsInteractable {
+		result = append(result, interactable)
+	}
+	for _, pCtrl := range parentCtrl.Rectangles {
+		result = append(result, GetAllInteractables(pCtrl, &pCtrl.Control)...)
+	}
+	for _, pCtrl := range parentCtrl.Ellipses {
+		result = append(result, GetAllInteractables(pCtrl, &pCtrl.Control)...)
+	}
+	for _, pCtrl := range parentCtrl.Paths {
+		result = append(result, GetAllInteractables(pCtrl, &pCtrl.Control)...)
+	}
+	for _, pCtrl := range parentCtrl.Polygons {
+		result = append(result, GetAllInteractables(pCtrl, &pCtrl.Control)...)
+	}
+	return result
+}
+
 func main() {
 	wnd, err := unmarshalFromFile()
 	if err != nil {
@@ -491,10 +530,27 @@ func main() {
 		panic(err)
 	}
 
+	window.SetInputMode(glfw.CursorMode, glfw.CursorNormal)
 	window.MakeContextCurrent()
+
+	window.SetMouseButtonCallback(func(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
+		for _, pCtrl := range GetAllInteractables(wnd, &wnd.Control) {
+			pCtrl.CursorButtonEventHandler(button, action, mod)
+		}
+	})
+
+	window.SetCursorPosCallback(func(w *glfw.Window, xpos float64, ypos float64) {
+		for _, pCtrl := range GetAllInteractables(wnd, &wnd.Control) {
+			pCtrl.CursorEventHandler(xpos, ypos)
+		}
+	})
+
 	window.SetKeyCallback(func(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 		if action == glfw.Press && key == glfw.KeyEscape {
 			w.SetShouldClose(true)
+		}
+		for _, pCtrl := range GetAllInteractables(wnd, &wnd.Control) {
+			pCtrl.KeyEventHandler(key, scancode, action, mods)
 		}
 	})
 

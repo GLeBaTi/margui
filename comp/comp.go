@@ -1,10 +1,18 @@
 package comp
 
 import (
+	"math/rand"
+
 	"github.com/GLeBaTi/margui"
+	"github.com/go-gl/glfw/v3.2/glfw"
 )
 
-type Interactable struct{}
+type Interactable interface {
+	KeyEventHandler(key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey)
+	CursorEventHandler(x, y float64)
+	CursorButtonEventHandler(button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey)
+}
+
 type Positionable struct {
 	//Margin X:Left Y:Top Z:Right(Width) W:Bottom(Height)
 	Margin margui.XYZW `xml:"Margin,attr"`
@@ -19,16 +27,20 @@ type Positionable struct {
 }
 
 type Control struct {
-	Interactable
 	Positionable
 
-	Text string `xml:",chardata"`
-	Id   string `xml:"Id,attr"`
+	Text           string `xml:",chardata"`
+	Id             string `xml:"Id,attr"`
+	IsInteractable bool   `xml:"IsInteractable,attr"`
 
 	Rectangles []*Rectangle `xml:"Rectangle"`
 	Ellipses   []*Ellipse   `xml:"Ellipse"`
 	Paths      []*Rectangle `xml:"Path"`
 	Polygons   []*Rectangle `xml:"Polygon"`
+
+	IsMouseInside bool
+	MouseButton   glfw.MouseButton
+	MouseAction   glfw.Action
 }
 
 type SolidColorBrush struct {
@@ -90,4 +102,21 @@ type Polygon struct {
 
 type Drawable interface {
 	Draw()
+}
+
+func (e *Rectangle) KeyEventHandler(key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+
+}
+
+func (e *Rectangle) CursorEventHandler(mouseX, mouseY float64) {
+	e.IsMouseInside = (mouseX >= float64(e.GlobalMargin.X)) && (mouseX <= float64(e.GlobalMargin.X+e.GlobalMargin.Z)) &&
+		(mouseY >= float64(e.GlobalMargin.Y)) && (mouseY <= float64(e.GlobalMargin.Y+e.GlobalMargin.W))
+}
+
+func (e *Rectangle) CursorButtonEventHandler(button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
+	e.MouseButton = button
+	e.MouseAction = action
+	if e.IsMouseInside && e.MouseButton == glfw.MouseButtonLeft && e.MouseAction == glfw.Press {
+		e.Color = margui.NewColor(rand.Float32(), rand.Float32(), rand.Float32(), 1)
+	}
 }

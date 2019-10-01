@@ -20,7 +20,7 @@
         <Rectangle Dock="FillVertical" Margin="0 0 100 0" Color="1 1 0 1"  Pivot="0 0">
         </Rectangle>
 
-        <Rectangle Dock="LeftTop" Margin="20 20 80 50" Pivot="-1 1">
+        <Rectangle Dock="LeftTop" Margin="20 20 80 50" Pivot="-1 1" IsInteractable="True">
             <BackgroundLinearGradient Start="0 0" End="1 1">
                 <GradientStop Color="1 0 0 1" Offset="0" />
                 <GradientStop Color="1 1 0 1" Offset="0.5" />
@@ -48,7 +48,7 @@
         </Rectangle>
         <Rectangle Dock="Bottom" Margin="0 -20 80 50" Color="0 1 0 1" Pivot="0 -1">
         </Rectangle>
-        <Rectangle Dock="LeftBottom" Margin="20 -20 80 50" Color="0 1 0 1" Pivot="-1 -1">
+        <Rectangle Dock="LeftBottom" Margin="20 -20 80 50" Color="0 1 0 1" Pivot="-1 -1"  IsInteractable="True">
         </Rectangle>
         <Rectangle Dock="Left" Margin="20 0 80 50" Color="0 1 0 1" Pivot="-1 0">
         </Rectangle>

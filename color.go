@@ -12,6 +12,10 @@ type Color struct {
 	A float32
 }
 
+func NewColor(r, g, b, a float32) *Color {
+	return &Color{R: r, G: g, B: b, A: a}
+}
+
 func (c *Color) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 	return xml.Attr{Name: name, Value: fmt.Sprintf("%.2f", c.R) + " " + fmt.Sprintf("%.2f", c.G) + " " + fmt.Sprintf("%.2f", c.B) + " " + fmt.Sprintf("%.2f", c.A)}, nil
 }
