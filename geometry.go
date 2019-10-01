@@ -145,3 +145,12 @@ const (
 	RightTop       DockStyle = "RightTop"
 	RightBottom    DockStyle = "RightBottom"
 )
+
+type BorderStyle string
+
+const (
+	BNone   BorderStyle = ""
+	BSolid  BorderStyle = "Solid"
+	BDotted BorderStyle = "Dotted"
+	BDashed BorderStyle = "Dashed"
+)
