@@ -1,3 +1,14 @@
 
-
-/.idea
+/.idea/.gitignore
+/.idea/codeStyles/codeStyleConfig.xml
+/.idea/dataSources.local.xml
+/.idea/dataSources.xml
+/.idea/dataSources
+/.idea/encodings.xml
+/.idea/go.imports.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/margui.iml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/vcs.xml
+/.idea/watcherTasks.xml
