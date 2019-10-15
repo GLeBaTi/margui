@@ -160,7 +160,6 @@ func newRadialGradientTexture(ctrlGlobalMargin margui.XYZW, gradient comp.Radial
 
 	fragment_shaderStr := fmt.Sprintf(`
     #version 110
-    out vec4 frag_colour;
     uniform int   numStops;
 	uniform vec4  colors[16];
 	uniform float stops[16];
@@ -224,9 +223,8 @@ func newSolidColorTexture(color margui.Color) (texture uint32, program uint32) {
 
 	fragment_shaderStr := fmt.Sprintf(`
     #version 110
-    out vec4 frag_colour;
     void main() {
-        frag_colour = vec4(%f, %f, %f, %f);
+        gl_FragColor = vec4(%f, %f, %f, %f);
     }
 `+"\x00", color.R, color.G, color.B, color.A)
 
